@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Perplexity AI Story: An Interactive Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Midnight Indigo -->
+    <!-- Application Structure Plan: A non-linear, thematic SPA. The structure prioritizes user-driven exploration over the report's linear format. It starts with a Hero section for immediate orientation and navigation. Key information is grouped into logical, interactive modules: 'The Big Idea' (origin story), 'The Architects' (interactive founder cards), 'How It Works' (toggle-able tech/features), 'Plans & Pricing' (clickable comparison table), 'The Competitive Arena' (dynamic competitor selector), 'The Core Conflict' (balanced view of the controversy), and 'Future Outlook' (valuation chart + interactive SWOT). This design allows users to jump to sections of interest, interact with data directly (e.g., comparing plans or competitors), and digest complex information in manageable, visually engaging chunks, enhancing usability and comprehension. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Company Valuation Growth -> Goal: Show change -> Viz: Line Chart (Chart.js) -> Interaction: Hover for details -> Justification: Clearly visualizes the dramatic financial trajectory.
+        - Report Info: Founder Profiles -> Goal: Organize/Inform -> Viz: Interactive Cards (HTML/Tailwind) -> Interaction: Click to expand/reveal details -> Justification: More engaging and space-efficient than a static table.
+        - Report Info: Pricing Tiers -> Goal: Compare -> Viz: Interactive Table (HTML/Tailwind) -> Interaction: Click to highlight a plan and view its features -> Justification: Simplifies direct comparison for users.
+        - Report Info: Competitor Analysis -> Goal: Compare -> Viz: Dynamic Content Blocks (HTML/JS) -> Interaction: Click buttons to switch between competitor views. ✨ Gemini-powered button to summarize strategy. -> Justification: Prevents information overload and adds AI-driven insight.
+        - Report Info: SWOT Analysis -> Goal: Organize/Inform -> Viz: 2x2 Clickable Grid (HTML/Tailwind) -> Interaction: Click quadrant to reveal details. ✨ Gemini-powered button to regenerate SWOT. -> Justification: An intuitive and interactive way to present structured analysis, now with dynamic AI generation.
+        - Report Info: Core Technology -> Goal: Inform -> Viz: Styled Text Blocks with Icons (Unicode) -> Interaction: Toggle between high-level concepts -> Justification: Breaks down complex tech into digestible pieces.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #111827; }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .nav-button.active { background-color: #4f46e5; color: #ffffff; }
+        .plan-card.active { border-color: #6366f1; transform: scale(1.02); box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.3); }
+        .swot-card.active { background-color: #312e81; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #sparkle-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .sparkle {
+            position: absolute;
+            background-color: #7c3aed;
+            border-radius: 50%;
+            animation: sparkle-animation 5s infinite;
+            opacity: 0;
+        }
+
+        @keyframes sparkle-animation {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #4f46e5;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-slate-300">
+
+    <div id="sparkle-background"></div>
+
+    <header class="bg-gray-900/80 backdrop-blur-lg sticky top-0 z-50 shadow-lg shadow-black/20">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">
+                <span class="text-indigo-400">Perplexity</span> AI
+            </h1>
+            <div class="hidden md:flex space-x-2">
+                <button onclick="scrollToSection('idea')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">The Idea</button>
+                <button onclick="scrollToSection('architects')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">Architects</button>
+                <button onclick="scrollToSection('tech')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">How It Works</button>
+                <button onclick="scrollToSection('plans')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">Plans</button>
+                <button onclick="scrollToSection('competition')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">Competition</button>
+                <button onclick="scrollToSection('conflict')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">Conflict</button>
+                <button onclick="scrollToSection('future')" class="nav-button px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors">Future</button>
+            </div>
+            <div class="md:hidden">
+                <select onchange="scrollToSection(this.value)" class="bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-sm text-white">
+                    <option value="">Navigate...</option>
+                    <option value="idea">The Idea</option>
+                    <option value="architects">Architects</option>
+                    <option value="tech">How It Works</option>
+                    <option value="plans">Plans</option>
+                    <option value="competition">Competition</option>
+                    <option value="conflict">Conflict</option>
+                    <option value="future">Future</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="hero" class="text-center mb-20">
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-4">The Rise of an <span class="text-indigo-400">Answer Engine</span></h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-400 mb-8">
+                An interactive analysis of Perplexity AI — the ambitious startup challenging the search monopoly by providing direct, cited answers. Explore its technology, team, business model, and the controversies shaping its future.
+            </p>
+        </section>
+
+        <div class="space-y-24">
+
+            <section id="idea">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">The Genesis of an Idea</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Perplexity AI was born from a simple frustration: traditional search engines give you a list of links, not answers. This section explores the problem they set out to solve and the strategic pivot that defined their mission.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h4 class="font-bold text-xl mb-3 text-red-400">The Problem with Search</h4>
+                        <p class="text-slate-400">For decades, search meant sifting through "SEO spam, sponsored links, and multiple web pages." The user had to do all the work of synthesizing information. This cognitive load was inefficient and time-consuming, creating a clear market need for a better solution.</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h4 class="font-bold text-xl mb-3 text-green-400">The "Answer Engine" Vision</h4>
+                        <p class="text-slate-400">Perplexity's core mission is to shift the burden of synthesis from the user to the machine. By leveraging powerful LLMs and grounding them in real-time web data with verifiable citations, they created the "world's first conversational search engine" to deliver trustworthy, synthesized answers and combat AI "hallucinations."</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="architects">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">The Architects</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">The company's rapid ascent is powered by a founding team that blends elite AI research with proven experience in scaling global products. Click on each founder to learn more about their background and expertise.</p>
+                </div>
+                <div id="founders-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                </div>
+            </section>
+            
+            <section id="tech">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">How It Works</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Perplexity's advantage isn't a single monolithic AI, but a sophisticated system that orchestrates multiple models with live web data. Explore the core technology and the key features that make it a powerful research tool.</p>
+                </div>
+                <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                    <div class="flex justify-center mb-8 border-b border-gray-700">
+                        <button id="tech-toggle-core" onclick="showTechTab('core')" class="tech-tab-button px-6 py-3 font-medium text-indigo-400 border-b-2 border-indigo-400">Core Technology</button>
+                        <button id="tech-toggle-features" onclick="showTechTab('features')" class="tech-tab-button px-6 py-3 font-medium text-slate-400 border-b-2 border-transparent">Key Features</button>
+                    </div>
+                    <div id="tech-content-core" class="tech-content fade-in">
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-semibold text-lg mb-2 text-white">Hybrid LLM Engine</h4>
+                                <p class="text-slate-400">Instead of relying on one model, Perplexity integrates a portfolio of leading third-party models (GPT-4.1, Claude 3.5, Gemini) and its own optimized models. This allows it to select the best tool for each specific query.</p>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg mb-2 text-white">Real-Time Search & Citations</h4>
+                                <p class="text-slate-400">This is the key differentiator. Every query triggers a live web search, ensuring answers are up-to-date. Crucially, every piece of information is linked back to its source, providing transparency and allowing users to verify facts and combat AI hallucinations.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tech-content-features" class="tech-content fade-in hidden">
+                        <ul id="features-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="plans">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">Plans & Pricing</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Perplexity uses a freemium model to attract a wide user base while offering powerful upgrades for professionals and enterprises. Click on a plan to see a detailed breakdown of its features and target user.</p>
+                </div>
+                <div class="grid lg:grid-cols-3 gap-8 items-start">
+                    <div id="plan-card-Free" onclick="selectPlan('Free')" class="plan-card bg-gray-800 p-8 rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all">
+                        <h4 class="text-2xl font-bold text-white">Standard</h4>
+                        <p class="text-slate-400 mb-4">For casual discovery</p>
+                        <p class="text-4xl font-bold text-white mb-6">$0</p>
+                        <p class="text-slate-400">Unlimited Quick Searches and a daily taste of Pro features.</p>
+                    </div>
+                    <div id="plan-card-Pro" onclick="selectPlan('Pro')" class="plan-card bg-gray-800 p-8 rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all">
+                        <h4 class="text-2xl font-bold text-white">Pro</h4>
+                        <p class="text-slate-400 mb-4">For serious researchers</p>
+                        <p class="text-4xl font-bold text-white mb-6">$20<span class="text-lg font-normal text-slate-500">/mo</span></p>
+                        <p class="text-slate-400">High-volume Pro Search, access to top-tier AI models, and unlimited file uploads.</p>
+                    </div>
+                    <div id="plan-card-Enterprise" onclick="selectPlan('Enterprise')" class="plan-card bg-gray-800 p-8 rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all">
+                        <h4 class="text-2xl font-bold text-white">Enterprise Pro</h4>
+                        <p class="text-slate-400 mb-4">For collaborative teams</p>
+                        <p class="text-4xl font-bold text-white mb-6">$40<span class="text-lg font-normal text-slate-500">/user/mo</span></p>
+                        <p class="text-slate-400">All Pro features plus team collaboration, enhanced security, and admin controls.</p>
+                    </div>
+                </div>
+                <div id="plan-details" class="mt-10 bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 min-h-[200px] fade-in">
+                </div>
+            </section>
+
+            <section id="competition">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">The Competitive Arena</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Perplexity competes at the intersection of search and generative AI. Its strategy is to carve a niche in "high-intent research" rather than a frontal assault on tech titans. Select a competitor to see how Perplexity stacks up.</p>
+                </div>
+                <div class="flex justify-center space-x-4 mb-8">
+                    <button id="comp-btn-Google" onclick="showCompetitor('Google')" class="competitor-button bg-gray-800 px-5 py-2 rounded-full shadow-md font-medium text-slate-300 border-2 border-transparent transition-all hover:bg-indigo-500 hover:text-white">vs. Google</button>
+                    <button id="comp-btn-ChatGPT" onclick="showCompetitor('ChatGPT')" class="competitor-button bg-gray-800 px-5 py-2 rounded-full shadow-md font-medium text-slate-300 border-2 border-transparent transition-all hover:bg-indigo-500 hover:text-white">vs. ChatGPT</button>
+                </div>
+                <div id="competitor-content-wrapper" class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 min-h-[300px]">
+                    <div id="competitor-content" class="fade-in"></div>
+                    <div class="text-center mt-6">
+                         <button id="summarize-strategy-btn" onclick="summarizeStrategy()" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-500 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+                            ✨ Summarize Strategy with AI
+                        </button>
+                    </div>
+                    <div id="strategy-summary" class="mt-6 text-slate-300 bg-gray-900/50 p-4 rounded-lg min-h-[50px]"></div>
+                </div>
+            </section>
+            
+            <section id="conflict">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">The Core Conflict</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Despite its success, Perplexity faces an existential threat: allegations of systemic copyright infringement. This controversy creates a fundamental contradiction with its brand promise of trust and transparency.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h4 class="font-bold text-xl mb-3 text-red-400">The Allegations</h4>
+                        <p class="text-slate-400 mb-4">Major publishers like Forbes and Wired accuse Perplexity of illegally scraping and republishing copyrighted content without permission or proper compensation. Investigations suggest it bypasses web standards to access paywalled articles, threatening the viability of original journalism.</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h4 class="font-bold text-xl mb-3 text-blue-400">The Defense & Mitigation</h4>
+                        <p class="text-slate-400 mb-4">Perplexity argues its actions fall under "fair use," similar to a traditional search engine, and that it provides "AI-generated insights," not direct copies. In response to pressure, it has initiated a revenue-sharing program with some publishers, signaling a potential shift from scraping to partnership.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="future">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-white">Future Outlook</h3>
+                    <p class="mt-2 text-lg text-slate-400 max-w-2xl mx-auto">Fueled by massive investor confidence, Perplexity's vision extends far beyond search. Explore its financial trajectory and a strategic analysis of its strengths, weaknesses, opportunities, and threats.</p>
+                </div>
+                <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mb-12">
+                    <h4 class="text-xl font-bold text-center text-white mb-4">Meteoric Valuation Growth ($ Billions)</h4>
+                    <div class="chart-container">
+                        <canvas id="valuationChart"></canvas>
+                    </div>
+                </div>
+                <div class="text-center mb-8">
+                     <button id="regenerate-swot-btn" onclick="regenerateSwot()" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-500 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+                        ✨ Regenerate SWOT with AI
+                    </button>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div id="swot-grid" class="grid grid-cols-2 gap-4">
+                        <div id="swot-card-Strengths" onclick="showSwot('Strengths')" class="swot-card cursor-pointer p-6 rounded-lg bg-gray-800 shadow-lg border border-gray-700 text-center hover:bg-gray-700 transition-colors">
+                            <h5 class="font-bold text-lg text-green-400">Strengths</h5>
+                        </div>
+                        <div id="swot-card-Weaknesses" onclick="showSwot('Weaknesses')" class="swot-card cursor-pointer p-6 rounded-lg bg-gray-800 shadow-lg border border-gray-700 text-center hover:bg-gray-700 transition-colors">
+                            <h5 class="font-bold text-lg text-yellow-400">Weaknesses</h5>
+                        </div>
+                        <div id="swot-card-Opportunities" onclick="showSwot('Opportunities')" class="swot-card cursor-pointer p-6 rounded-lg bg-gray-800 shadow-lg border border-gray-700 text-center hover:bg-gray-700 transition-colors">
+                            <h5 class="font-bold text-lg text-blue-400">Opportunities</h5>
+                        </div>
+                        <div id="swot-card-Threats" onclick="showSwot('Threats')" class="swot-card cursor-pointer p-6 rounded-lg bg-gray-800 shadow-lg border border-gray-700 text-center hover:bg-gray-700 transition-colors">
+                            <h5 class="font-bold text-lg text-red-400">Threats</h5>
+                        </div>
+                    </div>
+                    <div id="swot-details" class="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 min-h-[250px] fade-in">
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 border-t border-gray-700 text-slate-500 mt-24">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>This interactive analysis is based on the report "Perplexity AI: An In-Depth Analysis."</p>
+            <p class="text-sm mt-2">Created by Girish Lade for educational and informational purposes.</p>
+            <div class="flex justify-center items-center space-x-4 mt-6">
+                <a href="https://www.instagram.com/girish_lade_/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-indigo-400 transition-colors">Instagram</a>
+                <a href="https://www.linkedin.com/in/girish-lade-075bba201/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-indigo-400 transition-colors">LinkedIn</a>
+                <a href="https://github.com/girishlade111" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-indigo-400 transition-colors">GitHub</a>
+                <a href="https://codepen.io/Girish-Lade-the-looper" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-indigo-400 transition-colors">Codepen</a>
+                <a href="mailto:girishlade111@gmail.com" class="text-slate-400 hover:text-indigo-400 transition-colors">Email</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const initialData = {
+            founders: [
+                { name: "Aravind Srinivas", title: "CEO", expertise: "Visionary AI researcher with a PhD from UC Berkeley and experience at OpenAI, Google Brain, and DeepMind. Drives the company's core mission.", image: "AS" },
+                { name: "Denis Yarats", title: "CTO", expertise: "Technical bedrock with a PhD from NYU and experience at Meta AI and Microsoft. Shapes the product's architecture and emphasis on citations.", image: "DY" },
+                { name: "Johnny Ho", title: "CSO", expertise: "Product and strategy lead from Harvard. A world-champion competitive programmer with experience at Quora and high-frequency trading.", image: "JH" },
+                { name: "Andy Konwinski", title: "President", expertise: "The enterprise scaler with a PhD from UC Berkeley. Co-founder of the multi-billion dollar company Databricks and co-creator of Apache Spark.", image: "AK" }
+            ],
+            features: [
+                { name: "Pro Search", description: "Acts as a conversational research guide, asking clarifying questions to deliver a more tailored report." },
+                { name: "Deep Research", description: "Autonomously performs dozens of searches on complex topics to generate a comprehensive, structured report." },
+                { name: "Focus Mode", description: "Constrains search to specific domains like Academic, YouTube, or Reddit for more relevant results." },
+                { name: "Perplexity Pages", description: "Generates a customizable, article-style web page from a simple prompt, turning research into a shareable asset." },
+                { name: "File Upload & Analysis", description: "Allows users to ask questions about their own documents (PDFs, CSVs) and synthesize with web data." },
+                { name: "Image Generation", description: "Integrates text-to-image models like DALL-E 3 for Pro users to create visuals directly on the platform." }
+            ],
+            plans: {
+                Free: {
+                    title: "Standard (Free)",
+                    features: [
+                        "Unlimited Quick Searches using standard AI models.",
+                        "A limited number (3-5) of Pro Searches per day.",
+                        "Limited file uploads (3 per day).",
+                        "Ability to save history and create Collections.",
+                        "<strong>Target User:</strong> Individuals with occasional, straightforward research needs."
+                    ]
+                },
+                Pro: {
+                    title: "Pro ($20/month)",
+                    features: [
+                        "Over 300 Pro Searches per day.",
+                        "Full access to advanced AI models like GPT-4.1 and Claude 3.5 Sonnet.",
+                        "Unlimited file uploads for analysis.",
+                        "AI Image Generation using DALL-E 3 and others.",
+                        "$5 monthly API credit.",
+                        "<strong>Target User:</strong> Professionals, academics, and students who rely on frequent, in-depth research."
+                    ]
+                },
+                Enterprise: {
+                    title: "Enterprise Pro ($40/user/month)",
+                    features: [
+                        "All features from the Pro plan.",
+                        "Team Spaces for collaborative research and shared files.",
+                        "Centralized admin panel for user management and billing.",
+                        "Enhanced data security with SOC 2 Type II compliance.",
+                        "Dedicated priority support.",
+                        "<strong>Target User:</strong> Teams and companies requiring a shared, secure research environment."
+                    ]
+                }
+            },
+            competitors: {
+                Google: {
+                    title: "Perplexity vs. Google Search",
+                    points: [
+                        { type: 'P', text: "<strong>Answer Engine vs. Search Engine:</strong> Perplexity delivers synthesized, cited answers. Google returns a list of links, leaving the synthesis work to the user." },
+                        { type: 'P', text: "<strong>Ad-Free vs. Ad-Driven:</strong> Perplexity's subscription model allows for a clean, user-focused interface. Google's ad model leads to cluttered results with sponsored links." },
+                        { type: 'G', text: "<strong>Strength:</strong> Excels at complex, informational queries requiring deep research and summarization." },
+                        { type: 'G', text: "<strong>Weakness:</strong> Cannot match Google's dominance in local ('restaurants near me'), navigational, or commercial searches." }
+                    ]
+                },
+                ChatGPT: {
+                    title: "Perplexity vs. ChatGPT / Claude",
+                    points: [
+                        { type: 'P', text: "<strong>Research Tool vs. Creative Partner:</strong> Perplexity is a fact-finding tool rooted in live web data and citations. Chatbots are more versatile for brainstorming, content generation, and coding from static training data." },
+                        { type: 'P', text: "<strong>Accuracy vs. Hallucination:</strong> By grounding responses in cited, real-time sources, Perplexity is generally less prone to fabricating information." },
+                        { type: 'G', text: "<strong>Strength:</strong> More reliable for tasks where factual accuracy and up-to-date information are paramount." },
+                        { type: 'G', text: "<strong>Weakness:</strong> Chatbots often have larger context windows, making them better for long, evolving conversations or co-writing tasks." }
+                    ]
+                }
+            },
+            swot: {
+                Strengths: {
+                    color: "green-400",
+                    points: [
+                        "Formidable founding team with elite AI and business scaling expertise.",
+                        "Differentiated product focused on trust, citations, and up-to-date answers.",
+                        "Strong financial backing from top-tier investors like Jeff Bezos and NVIDIA."
+                    ]
+                },
+                Weaknesses: {
+                    color: "yellow-400",
+                    points: [
+                        "Dependence on third-party LLMs from competitors like Google and OpenAI.",
+                        "Documented issues with unreliable or plagiarized source citations.",
+                        "Core business model (scraping) is in direct conflict with content creators."
+                    ]
+                },
+                Opportunities: {
+                    color: "blue-400",
+                    points: [
+                        "Widespread user frustration with ad-cluttered traditional search.",
+                        "Huge, growing market for AI tools that automate knowledge work.",
+                        "First-mover advantage to define the 'answer engine' category."
+                    ]
+                },
+                Threats: {
+                    color: "red-400",
+                    points: [
+                        "Existential legal risk from copyright lawsuits by major publishers.",
+                        "Competition from giants like Google and Microsoft who can replicate features at scale.",
+                        "Potential for permanent brand damage from the plagiarism controversy."
+                    ]
+                }
+            }
+        };
+        
+        // Deep copy for runtime data
+        let appData = JSON.parse(JSON.stringify(initialData));
+        let currentCompetitor = 'Google';
+
+        function createSparkles() {
+            const container = document.getElementById('sparkle-background');
+            if (!container) return;
+            const sparkleCount = 50;
+            for (let i = 0; i < sparkleCount; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                const size = Math.random() * 3 + 1;
+                sparkle.style.width = `${size}px`;
+                sparkle.style.height = `${size}px`;
+                sparkle.style.top = `${Math.random() * 100}%`;
+                sparkle.style.left = `${Math.random() * 100}%`;
+                sparkle.style.animationDelay = `${Math.random() * 5}s`;
+                sparkle.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                container.appendChild(sparkle);
+            }
+        }
+
+        function scrollToSection(id) {
+            const section = document.getElementById(id);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function populateFounders() {
+            const grid = document.getElementById('founders-grid');
+            const colors = ['#1e3a8a', '#5b21b6', '#166534', '#a16207'];
+            grid.innerHTML = appData.founders.map((founder, index) => `
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 text-center cursor-pointer hover:shadow-indigo-500/20 hover:-translate-y-1 transition-all" onclick="toggleFounderDetail(this)">
+                    <div class="mx-auto w-20 h-20 rounded-full flex items-center justify-center font-bold text-3xl text-white mb-4" style="background-color: ${colors[index % colors.length]}">
+                        ${founder.image}
+                    </div>
+                    <h5 class="font-bold text-lg text-white">${founder.name}</h5>
+                    <p class="text-indigo-400 font-medium">${founder.title}</p>
+                    <p class="founder-detail text-slate-400 text-sm mt-3 hidden">${founder.expertise}</p>
+                </div>
+            `).join('');
+        }
+
+        function toggleFounderDetail(card) {
+            const detail = card.querySelector('.founder-detail');
+            detail.classList.toggle('hidden');
+        }
+        
+        function populateFeatures() {
+            const list = document.getElementById('features-list');
+            list.innerHTML = appData.features.map(feature => `
+                <li class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                    <h5 class="font-semibold text-white">${feature.name}</h5>
+                    <p class="text-sm text-slate-400">${feature.description}</p>
+                </li>
+            `).join('');
+        }
+
+        function showTechTab(tabName) {
+            document.getElementById('tech-content-core').classList.toggle('hidden', tabName !== 'core');
+            document.getElementById('tech-content-features').classList.toggle('hidden', tabName !== 'features');
+            
+            document.getElementById('tech-toggle-core').classList.toggle('text-indigo-400', tabName === 'core');
+            document.getElementById('tech-toggle-core').classList.toggle('border-indigo-400', tabName === 'core');
+            document.getElementById('tech-toggle-core').classList.toggle('text-slate-400', tabName !== 'core');
+            document.getElementById('tech-toggle-core').classList.toggle('border-transparent', tabName !== 'core');
+
+            document.getElementById('tech-toggle-features').classList.toggle('text-indigo-400', tabName === 'features');
+            document.getElementById('tech-toggle-features').classList.toggle('border-indigo-400', tabName === 'features');
+            document.getElementById('tech-toggle-features').classList.toggle('text-slate-400', tabName !== 'features');
+            document.getElementById('tech-toggle-features').classList.toggle('border-transparent', tabName !== 'features');
+        }
+
+        function selectPlan(planName) {
+            document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`plan-card-${planName}`).classList.add('active');
+
+            const detailsContainer = document.getElementById('plan-details');
+            const plan = appData.plans[planName];
+            detailsContainer.innerHTML = `
+                <h5 class="text-xl font-bold mb-4 text-white">${plan.title}</h5>
+                <ul class="space-y-2">
+                    ${plan.features.map(feature => `<li class="flex items-start"><span class="text-green-400 mr-2 mt-1">&#10003;</span><span class="text-slate-400">${feature}</span></li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function showCompetitor(competitorName) {
+            currentCompetitor = competitorName;
+            document.querySelectorAll('.competitor-button').forEach(btn => {
+                btn.classList.remove('bg-indigo-500', 'text-white');
+            });
+            const activeBtn = document.getElementById(`comp-btn-${competitorName}`);
+            activeBtn.classList.add('bg-indigo-500', 'text-white');
+
+            const contentContainer = document.getElementById('competitor-content');
+            const competitor = appData.competitors[competitorName];
+            contentContainer.innerHTML = `
+                <h5 class="text-xl font-bold mb-6 text-center text-white">${competitor.title}</h5>
+                <div class="grid md:grid-cols-2 gap-6">
+                    ${competitor.points.map(point => `
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-3">${point.type === 'P' ? '⚡️' : '⚖️'}</span>
+                            <div>
+                                <p class="text-slate-400">${point.text}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('strategy-summary').innerHTML = ''; // Clear previous summary
+        }
+        
+        function showSwot(swotKey) {
+            document.querySelectorAll('.swot-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`swot-card-${swotKey}`).classList.add('active');
+            
+            const detailsContainer = document.getElementById('swot-details');
+            const swotItem = appData.swot[swotKey];
+            
+            detailsContainer.innerHTML = `
+                <h5 class="font-bold text-xl mb-4 text-${swotItem.color}">${swotKey}</h5>
+                <ul class="space-y-3">
+                    ${swotItem.points.map(point => `<li class="flex items-start"><span class="text-${swotItem.color} mr-3 mt-1">&#8227;</span><span class="text-slate-400">${point}</span></li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function createValuationChart() {
+            const ctx = document.getElementById('valuationChart').getContext('2d');
+            Chart.defaults.color = '#94a3b8';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Start 2024', 'Mid 2024', 'End 2024', 'Early 2025'],
+                    datasets: [{
+                        label: 'Valuation ($B)',
+                        data: [0.52, 1, 9, 16],
+                        borderColor: '#818cf8',
+                        backgroundColor: 'rgba(129, 140, 248, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#818cf8',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value + 'B';
+                                },
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.2)'
+                            }
+                        },
+                        x: {
+                           ticks: {
+                                color: '#94a3b8'
+                           },
+                           grid: {
+                                color: 'rgba(148, 163, 184, 0.2)'
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#cbd5e1',
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Valuation: $' + context.parsed.y + ' Billion';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Gemini API Integration ---
+
+        async function callGemini(prompt, jsonSchema = null) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            let payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }]
+            };
+
+            if (jsonSchema) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: jsonSchema
+                };
+            }
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    throw new Error("Invalid response structure from API.");
+                }
+            } catch (error) {
+                console.error("Gemini API call error:", error);
+                return null;
+            }
+        }
+
+        async function summarizeStrategy() {
+            const btn = document.getElementById('summarize-strategy-btn');
+            const summaryContainer = document.getElementById('strategy-summary');
+            
+            btn.disabled = true;
+            summaryContainer.innerHTML = '<div class="flex justify-center items-center"><div class="loader"></div><span class="ml-3">Generating summary...</span></div>';
+
+            const competitorInfo = appData.competitors[currentCompetitor];
+            const pointsText = competitorInfo.points.map(p => p.text.replace(/<[^>]*>?/gm, '')).join('\n');
+            const prompt = `Based on the following comparison points between Perplexity AI and ${currentCompetitor}, please provide a concise, one-paragraph summary of Perplexity's competitive strategy:\n\n${pointsText}`;
+
+            const summary = await callGemini(prompt);
+
+            if (summary) {
+                summaryContainer.innerHTML = `<p>${summary}</p>`;
+            } else {
+                summaryContainer.innerHTML = '<p class="text-red-400">Could not generate summary. Please try again later.</p>';
+            }
+            btn.disabled = false;
+        }
+
+        async function regenerateSwot() {
+            const btn = document.getElementById('regenerate-swot-btn');
+            const swotDetails = document.getElementById('swot-details');
+            
+            btn.disabled = true;
+            swotDetails.innerHTML = '<div class="flex justify-center items-center h-full"><div class="loader"></div><span class="ml-3">Regenerating SWOT analysis...</span></div>';
+            
+            const context = "Perplexity AI is an 'answer engine' that challenges traditional search engines like Google. It uses multiple LLMs (like GPT and Claude) combined with its own models and real-time web search to provide direct, cited answers. Its founders have strong backgrounds in AI research and scaling businesses (OpenAI, Meta, Databricks). It faces controversy over web scraping and copyright but has strong investor backing, reaching a $16B valuation.";
+            const prompt = `Based on this context about Perplexity AI, generate a new, concise SWOT analysis. Provide exactly three distinct points for each category: Strengths, Weaknesses, Opportunities, and Threats.
+            Context: ${context}`;
+
+            const schema = {
+                type: "OBJECT",
+                properties: {
+                    "Strengths": { "type": "ARRAY", "items": { "type": "STRING" } },
+                    "Weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } },
+                    "Opportunities": { "type": "ARRAY", "items": { "type": "STRING" } },
+                    "Threats": { "type": "ARRAY", "items": { "type": "STRING" } }
+                }
+            };
+
+            const resultText = await callGemini(prompt, schema);
+
+            if (resultText) {
+                try {
+                    const newSwot = JSON.parse(resultText);
+                    appData.swot.Strengths.points = newSwot.Strengths;
+                    appData.swot.Weaknesses.points = newSwot.Weaknesses;
+                    appData.swot.Opportunities.points = newSwot.Opportunities;
+                    appData.swot.Threats.points = newSwot.Threats;
+                    showSwot('Strengths'); // Refresh the view
+                } catch(e) {
+                    console.error("Failed to parse SWOT JSON:", e);
+                    swotDetails.innerHTML = '<p class="text-red-400">Could not generate SWOT analysis due to a format error. Please try again.</p>';
+                }
+            } else {
+                swotDetails.innerHTML = '<p class="text-red-400">Could not generate SWOT analysis. Please try again later.</p>';
+            }
+
+            btn.disabled = false;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            createSparkles();
+            populateFounders();
+            populateFeatures();
+            selectPlan('Pro');
+            showCompetitor('Google');
+            showSwot('Strengths');
+            createValuationChart();
+        });
+
+    </script>
+</body>
+</html>
